@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Smart Grab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page login-page">
+    <header class="site-header center-header">
+      <div class="brand brand-large">Smart Grab !</div>
+      <button class="btn btn-back" onclick="window.location.href='index.html'">&larr; Back</button>
+    </header>
+    <main class="login-panel">
+      <h1>Login</h1>
+      <div class="login-tabs">
+        <button class="btn btn-login-tab" id="emailTab" type="button">Email & Password</button>
+        <button class="btn btn-login-tab" id="mobileTab" type="button">Mobile & OTP</button>
+      </div>
+      <form id="loginFormEmail" class="login-form">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="Enter email" required>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Enter password" required>
+        <div style="margin-bottom:10px;">
+          <input type="checkbox" id="showPasswordToggle" style="margin-right:6px;vertical-align:middle;">
+          <label for="showPasswordToggle" style="font-size:0.98rem;vertical-align:middle;cursor:pointer;">Show password</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+        <p id="loginStatusMsgEmail" class="status-message"></p>
+      </form>
+      <form id="loginFormMobile" class="login-form" style="display:none;">
+        <label for="mobile">Mobile Number</label>
+        <input id="mobile" name="mobile" type="tel" placeholder="Enter mobile number" pattern="[0-9]{10}" required>
+        <button type="button" id="verifyMobileBtn" class="btn-mobile-otp" style="display:none;">Verify</button>
+        <label for="otp">OTP</label>
+        <input id="otp" name="otp" type="text" placeholder="Enter OTP" required>
+        <button type="button" id="verifyMobileBtn" class="btn btn-secondary" style="display:none;">Send OTP</button>
+        <button type="submit" class="btn btn-primary">Login</button>
+        <p id="otpMessage" class="status-message" style="color:#fff;"></p>
+        <p id="loginStatusMsgMobile" class="status-message"></p>
+      </form>
+      <!-- Google sign-in removed -->
+    </main>
+  </div>
+  <script src="app.js"></script>
+  <script>
+    // Tab switching
+    document.getElementById('emailTab').onclick = function() {
+      document.getElementById('loginFormEmail').style.display = '';
+      document.getElementById('loginFormMobile').style.display = 'none';
+      this.classList.add('active');
+      document.getElementById('mobileTab').classList.remove('active');
+    };
+    document.getElementById('mobileTab').onclick = function() {
+      document.getElementById('loginFormEmail').style.display = 'none';
+      document.getElementById('loginFormMobile').style.display = '';
+      this.classList.add('active');
+      document.getElementById('emailTab').classList.remove('active');
+    };
+    // Email login
+    document.getElementById('loginFormEmail').onsubmit = function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const statusMsg = document.getElementById('loginStatusMsgEmail');
+      if (!email || !password) {
+        statusMsg.textContent = 'Please enter both email and password.';
+        statusMsg.style.color = '#dc2626';
+        return;
+      }
+
+      const savedUsers = JSON.parse(localStorage.getItem('savedUsers') || '{}');
+      if (savedUsers[email]) {
+        // existing account
+        if (savedUsers[email] !== password) {
+          statusMsg.textContent = 'Incorrect password. Please try again.';
+          statusMsg.style.color = '#dc2626';
+          return;
+        }
+      } else {
+        // new email account - save credentials
+        savedUsers[email] = password;
+        localStorage.setItem('savedUsers', JSON.stringify(savedUsers));
+      }
+
+      let username = '';
+      while (!username) {
+        const raw = prompt('Enter a username:');
+        if (raw === null) {
+          statusMsg.textContent = 'Username is required to complete login.';
+          statusMsg.style.color = '#dc2626';
+          return;
+        }
+        username = raw.trim();
+      }
+
+      localStorage.setItem('username', username);
+      statusMsg.innerHTML = '<span style="color: #15803d; font-weight: 700;">✅ Successfully logged in</span>';
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userContact', email);
+      addUserContactHistory(email);
+      localStorage.setItem('siteContactEmail', email);
+      setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+    };
+    // Mobile login
+    document.getElementById('loginFormMobile').onsubmit = function(e) {
+      e.preventDefault();
+      const mobile = document.getElementById('mobile').value.trim();
+      const otp = document.getElementById('otp').value.trim();
+      const statusMsg = document.getElementById('loginStatusMsgMobile');
+      const storedOTP = localStorage.getItem('latestOTP');
+
+      if (!/^\d{10}$/.test(mobile)) {
+        statusMsg.textContent = 'Please enter a valid mobile number.';
+        statusMsg.style.color = '#dc2626';
+        return;
+      }
+      if (!storedOTP) {
+        statusMsg.textContent = 'Please generate OTP first.';
+        statusMsg.style.color = '#dc2626';
+        return;
+      }
+      if (otp !== storedOTP) {
+        statusMsg.textContent = 'OTP is incorrect. Please recheck or resend OTP.';
+        statusMsg.style.color = '#dc2626';
+        return;
+      }
+
+      let username = '';
+      while (!username) {
+        const raw = prompt('Enter a username:');
+        if (raw === null) {
+          statusMsg.textContent = 'Username is required to complete login.';
+          statusMsg.style.color = '#dc2626';
+          return;
+        }
+        username = raw.trim();
+      }
+
+      localStorage.setItem('username', username);
+      statusMsg.innerHTML = '<span style="color: #15803d; font-weight: 700;">✅ Successfully logged in</span>';
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userContact', mobile);
+      addUserContactHistory(mobile);
+      localStorage.setItem('siteContactPhone', mobile);
+      localStorage.removeItem('latestOTP');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+    };
+    // Verify mobile number
+    document.getElementById('mobile').addEventListener('input', function() {
+      if (/^\d{10}$/.test(this.value)) {
+        document.getElementById('verifyMobileBtn').style.display = 'inline-block';
+      } else {
+        document.getElementById('verifyMobileBtn').style.display = 'none';
+      }
+    });
+    // OTP logic for mobile login
+    const mobileInput = document.getElementById('mobile');
+    const verifyBtn = document.getElementById('verifyMobileBtn');
+    const otpMessage = document.getElementById('otpMessage');
+    let generatedOTP = null;
+
+    function generateOTP() {
+      return String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    if (mobileInput && verifyBtn) {
+      mobileInput.addEventListener('input', function() {
+        generatedOTP = null;
+        otpMessage.textContent = '';
+        document.getElementById('otp').value = '';
+        if (/^\d{10}$/.test(mobileInput.value.trim())) {
+          verifyBtn.style.display = '';
+        } else {
+          verifyBtn.style.display = 'none';
+        }
+      });
+
+      verifyBtn.addEventListener('click', function() {
+        otpMessage.textContent = ''; // hide previous error/text on re-send
+        const statusMsg = document.getElementById('loginStatusMsgMobile');
+        if (statusMsg) statusMsg.textContent = '';
+        if (!/^\d{10}$/.test(mobileInput.value.trim())) {
+          otpMessage.style.color = '#dc2626';
+          otpMessage.textContent = 'Enter a valid 10-digit mobile number first.';
+          return;
+        }
+        generatedOTP = generateOTP();
+        localStorage.setItem('latestOTP', generatedOTP);
+        otpMessage.style.color = '#a3e635';
+        otpMessage.textContent = `OTP generated (test mode): ${generatedOTP}`;
+      });
+    }
+
+    // Show/hide password toggle
+    const showPasswordToggle = document.getElementById('showPasswordToggle');
+    const passwordInput = document.getElementById('password');
+    if (showPasswordToggle && passwordInput) {
+      showPasswordToggle.addEventListener('change', function() {
+        passwordInput.type = this.checked ? 'text' : 'password';
+      });
+    }
+  </script>
+
+  <footer class="site-footer">
+    <div class="footer-row">
+      <div class="footer-left">
+        <strong>Smart Grab</strong>
+        <p>Community-based garbage reporting and clean teams coordination.</p>
+      </div>
+      <div class="footer-right">
+        <p id="footerContact">Logged in as: unknown</p>
+        <p id="footerContactHistory">Previous login(s): none</p>
+        <p id="footerSupport"></p>
+        <p><a href="privacy.html">Privacy Policy</a> | <a href="mailto:support@smartgrab.example">support@smartgrab.example</a> | <a href="tel:+911234567890">+91-12345-67890</a></p>
+      </div>
+    </div>
+    <div class="footer-meta">&copy; 2026 Smart Grab. All rights reserved.</div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clean City Report</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page home-page">
+
+    <header class="site-header center-header">
+      <div class="profile-btn-group">
+        <div class="profile-dropdown-container">
+          <button class="profile-btn" id="profileDropdownBtn" aria-label="Profile" tabindex="0">
+            <div class="profile-icon-wrapper">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.33 0-10 1.67-10 5v1h20v-1c0-3.33-6.67-5-10-5z" fill="currentColor"/>
+              </svg>
+            </div>
+          </button>
+          <span class="profile-arrow" id="profileArrow">&#9650;</span>
+          <div class="profile-dropdown" id="profileDropdown" aria-label="Profile menu">
+            <div class="profile-dropdown-card">
+              <div class="profile-dropdown-top">
+                <div id="profileName" class="profile-name">Guest</div>
+                <div id="profileInfo" class="profile-info">Not logged in</div>
+              </div>
+              <button class="profile-dropdown-item" id="profileMenuEdit">
+                <span class="profile-item-icon" aria-hidden="true">✎</span> Edit Profile
+              </button>
+              <button class="profile-dropdown-item" id="profileMenuCredits">
+                <span class="profile-item-icon" aria-hidden="true">★</span> Credits: <span id="profileCredits">0</span>
+              </button>
+              <div class="profile-divider"></div>
+              <button class="profile-dropdown-item profile-logout" id="profileMenuLogout">
+                <span class="profile-item-icon" aria-hidden="true">⇦</span> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="brand brand-large center-title">Smart Grab !</div>
+      <button class="btn btn-about" id="aboutBtn" style="margin-left:auto;">About</button>
+      <a class="btn btn-login" href="login.html" style="margin-left:14px;">Login</a>
+      <a class="btn btn-logout" id="logoutBtn" style="display:none;">Logout</a>
+    </header>
+    <script>
+      // Profile dropdown logic with arrow and vertical details
+      const profileBtn = document.getElementById('profileDropdownBtn');
+      const profileDropdown = document.getElementById('profileDropdown');
+      const profileContact = document.getElementById('profileContact');
+      const profileArrow = document.getElementById('profileArrow');
+      const profileLabel = document.querySelector('.profile-label');
+      function getUserCredits(contact) {
+        try {
+          const map = JSON.parse(localStorage.getItem('userCredits') || '{}');
+          return Number(map[contact] || 0);
+        } catch (e) {
+          return 0;
+        }
+      }
+      function updateProfileContact() {
+        const contact = localStorage.getItem('userContact');
+        const username = localStorage.getItem('username');
+        const profileGroup = document.querySelector('.profile-btn-group');
+        const loginLink = document.querySelector('.btn-login');
+        const logoutLink = document.getElementById('logoutBtn');
+        const profileNameEl = document.getElementById('profileName');
+        const profileInfoEl = document.getElementById('profileInfo');
+        const profileCreditsEl = document.getElementById('profileCredits');
+
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+        if (isLoggedIn && username) {
+          if (profileNameEl) profileNameEl.textContent = username;
+          if (profileGroup) profileGroup.style.display = 'flex';
+          if (loginLink) loginLink.style.display = 'none';
+          if (logoutLink) logoutLink.style.display = '';
+        } else {
+          if (profileNameEl) profileNameEl.textContent = 'Guest';
+          if (profileInfoEl) profileInfoEl.textContent = 'Not logged in';
+          if (profileGroup) profileGroup.style.display = 'none';
+          if (loginLink) loginLink.style.display = '';
+          if (logoutLink) logoutLink.style.display = 'none';
+        }
+
+        if (isLoggedIn && contact) {
+          const isPhone = /^\d{10}$/.test(contact);
+          if (profileInfoEl) profileInfoEl.textContent = isPhone ? `Phone: ${contact}` : `Email: ${contact}`;
+          if (typeof ensureUserCredits === 'function') {
+            ensureUserCredits(contact);
+          }
+          const userCredits = getUserCredits(contact);
+          if (profileCreditsEl) profileCreditsEl.textContent = userCredits;
+        } else {
+          if (profileInfoEl) profileInfoEl.textContent = 'Not logged in';
+          if (profileCreditsEl) profileCreditsEl.textContent = '0';
+        }
+      }
+      if (profileBtn && profileDropdown && profileArrow) {
+        function toggleProfileDropdown() {
+          const isOpen = profileDropdown.classList.contains('open');
+          if (isOpen) {
+            profileDropdown.classList.remove('open');
+            profileArrow.classList.remove('open');
+          } else {
+            profileDropdown.classList.add('open');
+            profileArrow.classList.add('open');
+          }
+        }
+        profileBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          toggleProfileDropdown();
+        });
+        profileArrow.addEventListener('click', function(e) {
+          e.stopPropagation();
+          toggleProfileDropdown();
+        });
+        document.addEventListener('click', function(e) {
+          if (!profileBtn.contains(e.target) && !profileArrow.contains(e.target) && !profileDropdown.contains(e.target)) {
+            profileDropdown.classList.remove('open');
+            profileArrow.classList.remove('open');
+          }
+        });
+        // Show contact info if logged in
+        updateProfileContact();
+
+        // Dropdown actions
+        const profileMenuEdit = document.getElementById('profileMenuEdit');
+        const profileMenuCredits = document.getElementById('profileMenuCredits');
+        const profileMenuLogout = document.getElementById('profileMenuLogout');
+
+        if (profileMenuEdit) {
+          profileMenuEdit.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const currentUsername = localStorage.getItem('username') || '';
+            let newUsername = prompt('Enter new username (max 12 chars):', currentUsername);
+            if (newUsername === null) {
+              return; // cancelled
+            }
+            newUsername = newUsername.trim();
+            if (newUsername.length === 0) {
+              alert('Username cannot be empty');
+              return;
+            }
+            if (newUsername.length > 12) {
+              alert('Username must be 12 characters or fewer');
+              return;
+            }
+            localStorage.setItem('username', newUsername);
+            updateProfileContact();
+            profileDropdown.classList.remove('open');
+            profileArrow.classList.remove('open');
+          });
+        }
+
+        if (profileMenuCredits) {
+          profileMenuCredits.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const contact = localStorage.getItem('userContact') || 'unknown';
+            const credits = getUserCredits(contact);
+            alert(`Credits for ${contact}: ${credits}`);
+          });
+        }
+
+        if (profileMenuLogout) {
+          profileMenuLogout.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Keep stored credits across sessions, clear only login state
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userContact');
+            localStorage.removeItem('username');
+            updateProfileContact();
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            profileDropdown.classList.remove('open');
+            profileArrow.classList.remove('open');
+            window.location.href = 'index.html';
+          });
+        }
+      }
+      // keep logout button in sync on page load
+      function updateLogoutBtn() {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+          logoutBtn.style.display = '';
+        } else {
+          logoutBtn.style.display = 'none';
+        }
+      }
+      updateLogoutBtn();
+    </script>
+
+    <main class="hero">
+      <div class="hero-copy hero-center">
+        <span class="eyebrow">Garbage Reporting</span>
+        <h1>Report garbage in your area.</h1>
+        <p>If you see a dirty spot, capture it and share the location. Help make the city cleaner.</p>
+        <p id="reportCount" class="report-count-text">0 people have shared garbage reports so far.</p>
+        <div class="button-group">
+          <a class="btn btn-primary" href="report.html">Report Garbage</a>
+          <a class="btn btn-secondary" href="history.html">Check History</a>
+          <button class="btn btn-team" id="joinTeamBtn" type="button">Join as Team</button>
+          <a class="btn btn-applications" href="team-applications.html">Team Applications</a>
+        </div>
+        <button class="btn btn-howitworks" id="howItWorksBtn" style="margin-top:18px;">How It Works?</button>
+      </div>
+    </main>
+
+    <div id="aboutModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width:600px;">
+        <span class="close" id="closeAbout">&times;</span>
+        <h2>About Garbage Problems &amp; Smart Grab</h2>
+        <div class="about-scroll" style="max-height:60vh;overflow-y:auto;">
+        <p><strong>India faces a massive challenge with garbage and waste management, both historically and today. Here are the key issues and how Smart Grab aims to solve them:</strong></p>
+        <ol style="padding-left:1.2em;">
+          <li><b>Overflowing Streets:</b> Many cities and towns have garbage piling up on roads, footpaths, and public spaces, creating an eyesore and health hazard.</li>
+          <li><b>Irregular Collection:</b> Waste is not collected regularly, leading to accumulation and foul smells.</li>
+          <li><b>Lack of Awareness:</b> Many people are unaware of the impact of improper waste disposal on health and the environment.</li>
+          <li><b>Open Dumping:</b> Garbage is often dumped in open areas, drains, and water bodies, polluting land and water.</li>
+          <li><b>Health Risks:</b> Uncollected waste attracts pests, spreads diseases, and endangers children and the elderly.</li>
+          <li><b>Plastic Pollution:</b> Single-use plastics and non-biodegradable waste clog drains and harm animals.</li>
+          <li><b>Burning Waste:</b> Open burning of garbage releases toxic fumes, worsening air quality.</li>
+          <li><b>Limited Recycling:</b> Most waste is not segregated or recycled, increasing landfill burden.</li>
+          <li><b>Urbanization:</b> Rapid urban growth outpaces waste management infrastructure.</li>
+          <li><b>Colonial Legacy:</b> Historical neglect of waste systems continues to affect modern cities.</li>
+          <li><b>Rural Neglect:</b> Villages often lack any formal waste collection or disposal system.</li>
+          <li><b>Informal Sector:</b> Ragpickers and informal workers handle waste without safety or recognition.</li>
+          <li><b>Public Participation:</b> Few citizens actively report or help solve garbage problems.</li>
+          <li><b>Policy Gaps:</b> Implementation of waste management rules is inconsistent.</li>
+          <li><b>Resource Constraints:</b> Municipalities lack funds and equipment for efficient collection.</li>
+          <li><b>Overflowing Landfills:</b> Landfills are overfilled, leaching toxins into soil and water.</li>
+          <li><b>Climate Impact:</b> Decomposing waste emits methane, a potent greenhouse gas.</li>
+          <li><b>Tourism Impact:</b> Littered tourist spots harm India's image and economy.</li>
+          <li><b>Education:</b> Schools rarely teach about waste segregation or recycling.</li>
+          <li><b>Household Waste:</b> Most homes mix wet and dry waste, making recycling harder.</li>
+          <li><b>Industrial Waste:</b> Factories sometimes dump hazardous waste illegally.</li>
+          <li><b>Construction Debris:</b> Rubble and debris block drains and roads.</li>
+          <li><b>Flooding:</b> Blocked drains from garbage cause urban flooding during rains.</li>
+          <li><b>Animal Hazards:</b> Stray animals eat plastic and get sick or die.</li>
+          <li><b>Visual Pollution:</b> Garbage heaps spoil the beauty of cities and towns.</li>
+          <li><b>Odour:</b> Rotting waste creates unbearable smells in neighborhoods.</li>
+          <li><b>Inadequate Bins:</b> Too few dustbins in public places.</li>
+          <li><b>Collection Timing:</b> Unpredictable garbage truck schedules.</li>
+          <li><b>Illegal Dumping:</b> People dump waste at night to avoid fines.</li>
+          <li><b>Slum Areas:</b> Densely populated areas lack basic waste services.</li>
+          <li><b>Hospital Waste:</b> Medical waste is sometimes mixed with regular garbage.</li>
+          <li><b>Electronic Waste:</b> E-waste is rarely recycled safely.</li>
+          <li><b>Awareness Campaigns:</b> Few effective campaigns to change behavior.</li>
+          <li><b>Policy Enforcement:</b> Weak enforcement of anti-littering laws.</li>
+          <li><b>Data Gaps:</b> Lack of real-time data on garbage hotspots.</li>
+          <li><b>Citizen Frustration:</b> People feel helpless to report or fix problems.</li>
+          <li><b>Stigma:</b> Waste work is seen as low-status.</li>
+          <li><b>Gender Issues:</b> Women in waste sector face extra risks.</li>
+          <li><b>Child Labor:</b> Children sometimes work in dangerous waste jobs.</li>
+          <li><b>Corruption:</b> Funds for waste management are sometimes misused.</li>
+          <li><b>Political Will:</b> Garbage is a low priority for some leaders.</li>
+          <li><b>Technology Gaps:</b> Few smart solutions for tracking and managing waste.</li>
+          <li><b>COVID-19:</b> Pandemic increased medical and household waste.</li>
+          <li><b>Segregation at Source:</b> Not widely practiced.</li>
+          <li><b>Composting:</b> Organic waste is rarely composted.</li>
+          <li><b>Incineration:</b> Burning waste in incinerators can cause pollution if not managed well.</li>
+          <li><b>Water Pollution:</b> Garbage in rivers and lakes harms aquatic life.</li>
+          <li><b>Soil Pollution:</b> Chemicals from waste seep into soil.</li>
+          <li><b>Fire Hazards:</b> Landfill fires are common and dangerous.</li>
+          <li><b>Noise:</b> Garbage trucks at odd hours disturb residents.</li>
+          <li><b>Inclusion:</b> Marginalized groups are left out of solutions.</li>
+          <li><b>Innovation:</b> Slow adoption of new waste management ideas.</li>
+          <li><b>Transparency:</b> Citizens rarely know where their waste goes.</li>
+          <li><b>Accountability:</b> Hard to hold anyone responsible for dirty areas.</li>
+          <li><b>Maintenance:</b> Dustbins and trucks often break down.</li>
+          <li><b>Seasonal Surges:</b> Festivals and events create extra waste.</li>
+          <li><b>Urban Sprawl:</b> New suburbs lack waste services.</li>
+          <li><b>Language Barriers:</b> Waste info not available in all languages.</li>
+          <li><b>Migration:</b> Migrant workers lack access to waste services.</li>
+          <li><b>Disaster Waste:</b> Floods and storms create huge waste piles.</li>
+          <li><b>Public Health:</b> Garbage increases risk of epidemics.</li>
+          <li><b>Cost:</b> Waste management is expensive for cities.</li>
+          <li><b>Private Sector:</b> Limited private investment in waste solutions.</li>
+          <li><b>Monitoring:</b> Few tools to monitor progress in real time.</li>
+          <li><b>Citizen Science:</b> Rarely used for waste mapping.</li>
+          <li><b>Incentives:</b> Few rewards for good behavior.</li>
+          <li><b>Reporting:</b> No easy way to report garbage hotspots—until now!</li>
+          <li><b>Smart Grab Solution:</b> <br>Our website, <b>Smart Grab</b>, is designed to tackle these problems by:
+            <ul>
+              <li>Letting anyone report garbage instantly with a photo and location.</li>
+              <li>Notifying cleaning teams for quick action.</li>
+              <li>Tracking cleaned locations and progress.</li>
+              <li>Rewarding users with credits for reporting (20 credits per report).</li>
+              <li>Offering cash prizes for top contributors (1000+ credits).</li>
+              <li>Making waste management transparent and community-driven.</li>
+              <li>Encouraging everyone to be part of the solution!</li>
+            </ul>
+          </li>
+        </ol>
+        <p><b>Together, we can make our cities and villages cleaner, healthier, and more beautiful. Join Smart Grab and be the change!</b></p>
+        </div>
+      </div>
+    </div>
+    <div id="joinTeamModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width:420px;">
+        <span class="close" id="closeJoinTeam">&times;</span>
+        <h2>Join as a Cleaning Team</h2>
+        <p>
+          Want to help clean the city? Register your team with Smart Grab!<br><br>
+          <b>Team Requirements:</b>
+          <ul>
+            <li>Each team must have <b>4 to 6 members</b>.</li>
+            <li>Each member should be ready to respond to garbage reports in your area.</li>
+            <li>Once registered, your team can view and respond to new reports, and submit cleaned location updates.</li>
+          </ul>
+          <b>Ready to join?</b> Click below to start your team registration!
+        </p>
+        <button class="btn btn-primary" onclick="window.location.href='join-team.html'">Register Team</button>
+      </div>
+    </div>
+    <div id="howItWorksModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width:420px;">
+        <span class="close" id="closeHowItWorks">&times;</span>
+        <h2>How Smart Grab Works</h2>
+        <p>
+          <b>1. See garbage?</b> Upload a photo and location using the <b>Report Garbage</b> button.<br><br>
+          <b>2. Nearest team notified:</b> The closest cleaning team is alerted and can come clean the spot.<br><br>
+          <b>3. Cleaned location posted:</b> The team can post a photo of the cleaned area on the website.<br><br>
+          <b>4. Earn credits:</b> Every report you submit gives you <b>20 credits</b>.<br>
+          <b>5. Win rewards:</b> If you reach <b>1000 credits</b>, you win a cash prize!<br><br>
+          <b>Why participate?</b> Help keep your city clean, earn rewards, and make a difference in your community!
+        </p>
+      </div>
+    </div>
+    <!-- Sign In Modal -->
+    <div id="signInModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width:340px;text-align:center;">
+        <button class="close" id="closeSignIn" style="position:absolute;top:12px;right:18px;background:none;border:none;font-size:1.3em;color:inherit;cursor:pointer;">Close</button>
+        <h2 style="margin-bottom:18px;">Sign in to your account</h2>
+        <p style="font-size:1.1rem;">Please sign in to continue.</p>
+        <a class="btn btn-login" href="login.html">Go to Login</a>
+      </div>
+    </div>
+    <script>
+      document.getElementById('aboutBtn').onclick = function() {
+        document.getElementById('aboutModal').style.display = 'block';
+      };
+      document.getElementById('closeAbout').onclick = function() {
+        document.getElementById('aboutModal').style.display = 'none';
+      };
+      window.onclick = function(event) {
+        const modal = document.getElementById('aboutModal');
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+      document.getElementById('joinTeamBtn').onclick = function() {
+        document.getElementById('joinTeamModal').style.display = 'block';
+      };
+      document.getElementById('closeJoinTeam').onclick = function() {
+        document.getElementById('joinTeamModal').style.display = 'none';
+      };
+      window.onclick = function(event) {
+        const modal = document.getElementById('joinTeamModal');
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+      document.getElementById('howItWorksBtn').onclick = function() {
+        document.getElementById('howItWorksModal').style.display = 'block';
+      };
+      document.getElementById('closeHowItWorks').onclick = function() {
+        document.getElementById('howItWorksModal').style.display = 'none';
+      };
+      window.onclick = function(event) {
+        const modal = document.getElementById('howItWorksModal');
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+      // Remove incorrect click handler on the modal itself
+      document.getElementById('closeSignIn').onclick = function(e) {
+        e.preventDefault();
+        document.getElementById('signInModal').style.display = 'none';
+      };
+      window.addEventListener('click', function(event) {
+        const modal = document.getElementById('signInModal');
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+      // Only show sign-in modal if not logged in
+      function isLoggedIn() {
+        return localStorage.getItem('isLoggedIn') === 'true';
+      }
+      function showSignInModal() {
+        document.getElementById('signInModal').style.display = 'block';
+      }
+      document.querySelectorAll('.btn:not(.btn-about):not(.btn-howitworks)').forEach(btn => {
+        if (btn.id !== 'aboutBtn' && btn.id !== 'howItWorksBtn') {
+          btn.addEventListener('click', function(e) {
+            if (btn.classList.contains('btn-login')) return; // let login button go to login
+            if (isLoggedIn()) return; // allow navigation if logged in
+            e.preventDefault();
+            showSignInModal();
+          });
+        }
+      });
+      // On first load, force sign out
+      if (!isLoggedIn()) {
+        localStorage.removeItem('isLoggedIn');
+      }
+      // Show/hide logout button based on login state
+      function updateLogoutBtn() {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (isLoggedIn()) {
+          logoutBtn.style.display = '';
+        } else {
+          logoutBtn.style.display = 'none';
+        }
+      }
+      updateLogoutBtn();
+      // Logout logic
+      document.getElementById('logoutBtn').onclick = function(e) {
+        e.preventDefault();
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userContact');
+        updateLogoutBtn();
+        // Optionally reload to reset state
+        window.location.reload();
+      };
+      // Update logout button on login
+      window.addEventListener('storage', updateLogoutBtn);
+    </script>
+
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-row">
+      <div class="footer-left">
+        <strong>Smart Grab</strong>
+        <p>Community-based garbage reporting and clean teams coordination.</p>
+      </div>
+      <div class="footer-right">
+        <p id="footerContact">Logged in as: unknown</p>
+        <p id="footerContactHistory">Previous login(s): none</p>
+        <p id="footerSupport"></p>
+        <p><a href="privacy.html">Privacy Policy</a> | <a href="mailto:support@smartgrab.example">support@smartgrab.example</a> | <a href="tel:+911234567890">+91-12345-67890</a></p>
+      </div>
+    </div>
+    <div class="footer-meta">&copy; 2026 Smart Grab. All rights reserved.</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

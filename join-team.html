@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join as Cleaning Team | Smart Grab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page join-team-page">
+    <header class="site-header center-header">
+      <div class="brand brand-large">Smart Grab !</div>
+      <button class="btn btn-back" onclick="window.location.href='index.html'">&larr; Back</button>
+    </header>
+    <main class="join-team-panel">
+      <h1>Team Registration</h1>
+      <p>Register your cleaning team (4-6 members) to help keep the city clean!</p>
+      <form id="teamForm" class="team-form">
+        <label for="teamName">Team Name</label>
+        <input id="teamName" name="teamName" type="text" placeholder="Enter team name" required>
+        <div id="membersContainer">
+          <label>Team Members (Name & Phone)</label>
+          <div class="member-row">
+            <input name="memberName" type="text" placeholder="Member Name" required>
+            <input name="memberPhone" type="tel" placeholder="Phone Number" required pattern="[0-9]{10}">
+          </div>
+          <div class="member-row">
+            <input name="memberName" type="text" placeholder="Member Name" required>
+            <input name="memberPhone" type="tel" placeholder="Phone Number" required pattern="[0-9]{10}">
+          </div>
+          <div class="member-row">
+            <input name="memberName" type="text" placeholder="Member Name" required>
+            <input name="memberPhone" type="tel" placeholder="Phone Number" required pattern="[0-9]{10}">
+          </div>
+          <div class="member-row">
+            <input name="memberName" type="text" placeholder="Member Name" required>
+            <input name="memberPhone" type="tel" placeholder="Phone Number" required pattern="[0-9]{10}">
+          </div>
+        </div>
+        <button type="button" class="btn btn-info" id="addMemberBtn">+ Add Member</button>
+        <button type="button" class="btn btn-secondary" id="removeMemberBtn">- Remove Member</button>
+        <button type="submit" class="btn btn-primary">Submit Application</button>
+        <p id="teamStatusMsg" class="status-message"></p>
+      </form>
+    </main>
+  </div>
+  <script>
+    const membersContainer = document.getElementById('membersContainer');
+    const addMemberBtn = document.getElementById('addMemberBtn');
+    const removeMemberBtn = document.getElementById('removeMemberBtn');
+    function memberRowsCount() {
+      return membersContainer.querySelectorAll('.member-row').length;
+    }
+    addMemberBtn.onclick = function() {
+      if (memberRowsCount() < 6) {
+        const row = document.createElement('div');
+        row.className = 'member-row';
+        row.innerHTML = `<input name="memberName" type="text" placeholder="Member Name" required> <input name="memberPhone" type="tel" placeholder="Phone Number" required pattern="[0-9]{10}">`;
+        membersContainer.appendChild(row);
+      }
+    };
+    removeMemberBtn.onclick = function() {
+      if (memberRowsCount() > 4) {
+        membersContainer.removeChild(membersContainer.lastElementChild);
+      }
+    };
+    document.getElementById('teamForm').onsubmit = function(e) {
+      e.preventDefault();
+      const teamName = document.getElementById('teamName').value.trim();
+      const memberNames = Array.from(document.getElementsByName('memberName')).map(input => input.value.trim());
+      const memberPhones = Array.from(document.getElementsByName('memberPhone')).map(input => input.value.trim());
+      const statusMsg = document.getElementById('teamStatusMsg');
+      if (memberNames.length < 4 || memberNames.length > 6) {
+        statusMsg.textContent = 'Team must have 4 to 6 members.';
+        statusMsg.style.color = '#dc2626';
+        return;
+      }
+      if (memberNames.some(n => !n) || memberPhones.some(p => !/^\d{10}$/.test(p))) {
+        statusMsg.textContent = 'Please enter valid names and 10-digit phone numbers for all members.';
+        statusMsg.style.color = '#dc2626';
+        return;
+      }
+      // Save to localStorage
+      const teams = JSON.parse(localStorage.getItem('teams') || '[]');
+      teams.push({ teamName, members: memberNames.map((name, i) => ({ name, phone: memberPhones[i] })) });
+      localStorage.setItem('teams', JSON.stringify(teams));
+      statusMsg.textContent = 'Application successful! The admin can call you.';
+      statusMsg.style.color = '#15803d';
+      document.getElementById('teamForm').reset();
+      // Reset to 4 member rows
+      while (memberRowsCount() > 4) membersContainer.removeChild(membersContainer.lastElementChild);
+    };
+  </script>
+
+  <footer class="site-footer">
+    <div class="footer-row">
+      <div class="footer-left">
+        <strong>Smart Grab</strong>
+        <p>Community-based garbage reporting and clean teams coordination.</p>
+      </div>
+      <div class="footer-right">
+        <p id="footerContact">Logged in as: unknown</p>
+        <p id="footerContactHistory">Previous login(s): none</p>
+        <p id="footerSupport"></p>
+        <p><a href="privacy.html">Privacy Policy</a> | <a href="mailto:support@smartgrab.example">support@smartgrab.example</a> | <a href="tel:+911234567890">+91-12345-67890</a></p>
+      </div>
+    </div>
+    <div class="footer-meta">&copy; 2026 Smart Grab. All rights reserved.</div>
+  </footer>
+</body>
+</html>

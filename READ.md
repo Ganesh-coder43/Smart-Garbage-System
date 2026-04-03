@@ -16,8 +16,8 @@ This website helps users report garbage issues in their area by uploading images
 - AI Tools
 
 ## 📷 Website Preview
-![Garbage Dashboard](naukri/garbage_pic1.png)
-![Garbage login Page](naukri/garbage_pic2.png)
+![Garbage Dashboard](pics/garbage_pic1.png)
+![Garbage login Page](pics/garbage_pic2.png)
 
 ## 📂 Files Included
 - index.html
